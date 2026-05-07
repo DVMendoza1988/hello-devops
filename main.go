@@ -6,12 +6,13 @@ import (
 )
 
 func main() {
-	// len() checks how many items are in os.Args
 	if len(os.Args) < 2 {
-		fmt.Println("Error: Please provide a username.")
-		fmt.Println("Usage: go run main.go [name]")
-		os.Exit(1) // Exit with 1 to signal a failure to the OS
+		fmt.Println("Error: Missing argument.")
+		os.Exit(1)
 	}
 
-	fmt.Println("System Online: Hello", os.Args[1])
+	// Declare a variable named 'user' and assign it the value from Args
+	var user string = os.Args[1]
+
+	fmt.Printf("Access Granted: Welcome, %s\n", user)
 }
