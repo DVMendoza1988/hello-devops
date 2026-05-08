@@ -3,30 +3,48 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv" // New Package: String Conversion
 )
 
 func main() {
+	// 1. The Safety Gate (Prevents a crash if you forget to type a word)
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run main.go [number_of_servers]")
+		fmt.Println("ERROR: Please provide a service name.")
+		fmt.Println("Usage: go run main.go [service]")
 		os.Exit(1)
 	}
 
-	// 1. Arguments always come in as Strings.
-	//2. We must convert the string to an Integer (int) to do math.
-	input := os.Args[1]
-	serverCount, err := strconv.Atoi(input)
+	// 2. Grab the word you typed in the terminal
+	targetService := os.Args[1]
 
-	// In go, we handle errors IMMEDIATELY.
-
-	if err != nil {
-		fmt.Println("Error: Please provide a whole number.")
-		os.Exit(1)
+	// 3. Our internal database
+	portDB := map[string]int{
+		"ssh":     22,
+		"http":    80,
+		"dns":     53,
+		"https":   443,
+		"ftp":     21,
+		"smtp":    25,
+		"pop3":    110,
+		"imap":    143,
+		"ldap":    389,
+		"rdp":     3389,
+		"sql":     1433,
+		"redis":   6379,
+		"mongodb": 27017,
+		"kafka":   9092,
+		"telnet":  23,
+		"ntp":     123,
+		"IMAP":    143,
+		"imaps":   993,
 	}
 
-	const coresPerServer = 4 // Constants are declared with 'const' and cannot be changed.
-	totalCores := serverCount * coresPerServer
-	fmt.Printf("Infratructure report:\n")
-	fmt.Printf("- Servers %d\n", serverCount)
-	fmt.Printf("- Total CPU Cores Needed: %d\n", totalCores)
+	// 4. Look up whatever word you typed into the terminal
+	portNumber, exists := portDB[targetService]
+
+	// 5. The Output
+	if exists == true {
+		fmt.Printf("[RESOLVED] Service '%s' operates on Port %d\n", targetService, portNumber)
+	} else {
+		fmt.Printf("[ERROR] Unknown service: '%s'\n", targetService)
+	}
 }
