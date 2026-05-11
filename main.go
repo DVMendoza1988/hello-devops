@@ -2,29 +2,60 @@ package main
 
 import "fmt"
 
+// 1. THE BLUEPRINT
+// 'type' tells Go we are inventing a new shape.
+// 'struct' means it will be a collection of other variables.
+type Server struct {
+	Name      string
+	IPAddress string
+	Crashes   int
+	IsOnline  bool
+}
+
 func main() {
-	fmt.Println("--- FETCHING INCIDENT LOG ---")
+	fmt.Println("--- PROVISIONING NEW INFRASTRUCTURE ---")
 
-	// 1. THE SLICE
-	// '[]string' strictly means "This is an ordered list containing ONLY text."
-	// We populate it with three initial events.
-	var incidentLog []string = []string{
-		"08:00 AM - Server booted normally",
-		"09:15 AM - High memory usage warning",
-		"09:20 AM - Auto-scaling initiated",
+	// 2. BUILDING AN INSTANCE
+	// We use our 'Server' blueprint to create a specific machine.
+	// We use := to create and assign it to the variable 'frontendServer'.
+	frontendServer := Server{
+		Name:      "Web-Front-01",
+		IPAddress: "192.168.1.50",
+		Crashes:   0,
+		IsOnline:  true, // true means it is running!
+	}
+	dataBaseServer := Server{
+		Name:      "Customer-DB-01",
+		IPAddress: "10.0.0.5",
+		Crashes:   5,
+		IsOnline:  false, // false means it is down!
 	}
 
-	// 2. APPENDING
-	// An SRE's job is constantly updating state.
-	// 'append' takes our existing list, adds a new item to the end,
-	// and saves the new, longer list back into the incidentLog variable.
-	incidentLog = append(incidentLog, "10:05 AM - Database connection lost")
+	// 3. ACCESSING DATA (Dot Notation)
+	// We use a period '.' to look inside the struct and grab a specific field.
+	fmt.Println("Booting:", frontendServer.Name)
+	fmt.Println("IP:", frontendServer.IPAddress)
 
-	// 3. LOOPING A SLICE
-	// When we range over a Slice, it hands us two things:
-	// The 'index' (its number in line) and the 'event' (the text data).
-	for index, event := range incidentLog {
-		// Notice how we combine text, an integer, and text again.
-		fmt.Println("Event ID", index, "->", event)
-	}
+	fmt.Println("Booting:", dataBaseServer.Name)
+	fmt.Println("IP:", dataBaseServer.IPAddress)
+
+	// 4. THE SRE SCENARIO
+	// A power blip hits the data center. The server goes down.
+	fmt.Println("... POWER ANOMALY DETECTED ...")
+
+	// We use dot notation to modify the internal state of our struct.
+	frontendServer.IsOnline = false
+	frontendServer.Crashes = frontendServer.Crashes + 1
+
+	dataBaseServer.IsOnline = false
+	dataBaseServer.Crashes = dataBaseServer.Crashes + 1
+
+	// 5. OUTPUT NEW STATE
+	fmt.Println("Server Online:", frontendServer.IsOnline)
+	fmt.Println("Total Crashes:", frontendServer.Crashes)
+	fmt.Println("Server Online:", dataBaseServer.IsOnline)
+	fmt.Println("Total Crashes:", dataBaseServer.Crashes)
+	fmt.Printf("ALERT: %s at %s is currently offline!\n", frontendServer.Name, frontendServer.IPAddress)
+	fmt.Printf("ALERT: %s at %s is currently offline!\n", dataBaseServer.Name, dataBaseServer.IPAddress)
+
 }
