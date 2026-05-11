@@ -1,50 +1,30 @@
 package main
 
-import (
-	"fmt"
-	"os"
-)
+import "fmt"
 
 func main() {
-	// 1. The Safety Gate (Prevents a crash if you forget to type a word)
-	if len(os.Args) < 2 {
-		fmt.Println("ERROR: Please provide a service name.")
-		fmt.Println("Usage: go run main.go [service]")
-		os.Exit(1)
+	fmt.Println("--- FETCHING INCIDENT LOG ---")
+
+	// 1. THE SLICE
+	// '[]string' strictly means "This is an ordered list containing ONLY text."
+	// We populate it with three initial events.
+	var incidentLog []string = []string{
+		"08:00 AM - Server booted normally",
+		"09:15 AM - High memory usage warning",
+		"09:20 AM - Auto-scaling initiated",
 	}
 
-	// 2. Grab the word you typed in the terminal
-	targetService := os.Args[1]
+	// 2. APPENDING
+	// An SRE's job is constantly updating state.
+	// 'append' takes our existing list, adds a new item to the end,
+	// and saves the new, longer list back into the incidentLog variable.
+	incidentLog = append(incidentLog, "10:05 AM - Database connection lost")
 
-	// 3. Our internal database
-	portDB := map[string]int{
-		"ssh":     22,
-		"http":    80,
-		"dns":     53,
-		"https":   443,
-		"ftp":     21,
-		"smtp":    25,
-		"pop3":    110,
-		"imap":    143,
-		"ldap":    389,
-		"rdp":     3389,
-		"sql":     1433,
-		"redis":   6379,
-		"mongodb": 27017,
-		"kafka":   9092,
-		"telnet":  23,
-		"ntp":     123,
-		"IMAP":    143,
-		"imaps":   993,
-	}
-
-	// 4. Look up whatever word you typed into the terminal
-	portNumber, exists := portDB[targetService]
-
-	// 5. The Output
-	if exists == true {
-		fmt.Printf("[RESOLVED] Service '%s' operates on Port %d\n", targetService, portNumber)
-	} else {
-		fmt.Printf("[ERROR] Unknown service: '%s'\n", targetService)
+	// 3. LOOPING A SLICE
+	// When we range over a Slice, it hands us two things:
+	// The 'index' (its number in line) and the 'event' (the text data).
+	for index, event := range incidentLog {
+		// Notice how we combine text, an integer, and text again.
+		fmt.Println("Event ID", index, "->", event)
 	}
 }
