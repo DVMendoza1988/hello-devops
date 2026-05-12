@@ -1,45 +1,51 @@
 package main
 
-import "fmt"
+import (
+	"errors" // We need this built-in package to create custom errors
+	"fmt"
+)
 
-type Server struct {
-	Name      string
-	IPAddress string
-	IsOnline  bool
-	Crashes   int
-}
+// 1. MULTIPLE RETURN VALUES
+// This function promises to return TWO things: a string message, and an error.
+func pingServer(ip string) (string, error) {
 
-// 1. THE METHOD
-// Notice the special receiver block: (s *Server) BEFORE the function name.
-// This physicall attaches the 'Reboot' function to the Server blueprint.
-// * tells Go: "Do not make a copy. Use the Pointer to the actual memory."
+	// We check for bad input first.
+	if ip == "" {
+		// We return a blank string, and a newly created error.
+		return "", errors.New("CRITICAL: IP address cannot be completely blank")
+	}
 
-func (s *Server) Reboot() {
-	fmt.Printf("\n--- INITIATING REBOOT SEQUENCE FOR %s ---\n", s.Name)
+	if ip == "0.0.0.0" {
+		return "", errors.New("WARNING: 0.0.0.0 is an invalid routing address")
+	}
+	if ip == "127.0.0.1" {
+		return "", errors.New("ERROR: Cannot ping the local loopback address.")
+	}
 
-	// Because we used a pointer (*), this changes the REAL server.
-	s.IsOnline = true
-	s.Crashes = 0
-
-	fmt.Printf("SYSTEM MESSAGE: Boot successful.")
+	// If the CPU makes it past the checks, the IP is valid.
+	// We return our success string, and 'nil' (meaning absolutely no error).
+	return "Ping successful! Packet returned from " + ip, nil
 }
 
 func main() {
-	// 2. PROVISION A DEAD SERVER
-	targetServer := Server{
-		Name:      "Payment-Gateway-01",
-		IPAddress: "172.16.254.1",
-		IsOnline:  false,
-		Crashes:   14,
+	fmt.Println("--- NETWORK DIAGNOSTIC TOOL ---")
+
+	// 2. THE TARGET
+	targetIP := "127.0.0.1"
+
+	// 3. CAPTURING MULTIPLE RETURNS
+	// We catch the string in 'result', and the error in 'err'
+	result, err := pingServer(targetIP)
+
+	// 4. THE GO ERROR CHECK
+	// "If the error is NOT equal to nothing..." (Meaning, an error exists!)
+	if err != nil {
+		// Print the error and immediately stop the program using 'return'
+		fmt.Println("DIAGNOSTIC FAILED:", err)
+		return
 	}
-	// 3. CHECK INITIAL STATE
-	fmt.Println("Initial State ->", targetServer.Name, "Online:", targetServer.IsOnline)
 
-	// 4. PRESS THE REBOOT BUTTON
-	// We use dot notation to trigger the method attached to this specific struct.
-	targetServer.Reboot()
-
-	// 5. VERIFY RECOVERY
-	// If we didn't use the '*' pointer in step 1, this would still print 'false'!
-	fmt.Printf("\nFinal State -> %s Online: %t\n Crashes: %d\n", targetServer.Name, targetServer.IsOnline, targetServer.Crashes)
+	// 5. SUCCESS PATH
+	// If the CPU reaches here, we know 100% that err was nil.
+	fmt.Println("DIAGNOSTIC PASSED:", result)
 }
