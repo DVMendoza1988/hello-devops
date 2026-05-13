@@ -1,51 +1,56 @@
 package main
 
 import (
-	"errors" // We need this built-in package to create custom errors
 	"fmt"
+	"sync"
+	"time" // Gives the ability to pause the computer
 )
 
-// 1. MULTIPLE RETURN VALUES
-// This function promises to return TWO things: a string message, and an error.
-func pingServer(ip string) (string, error) {
+// 1. THE CONCURRENT WORKER
+// We pass in our server name, and a Pointer to our WaitGroup counter.
+func checkServerHealth(serverName string, wg *sync.WaitGroup) {
+	// 'defer'is a magic word. It means: "Wait until this function is complete"
+	// and then run this line right before ejecting
+	// wg.Done() subtracts 1 from our WaitGroup counter
+	defer wg.Done()
 
-	// We check for bad input first.
-	if ip == "" {
-		// We return a blank string, and a newly created error.
-		return "", errors.New("CRITICAL: IP address cannot be completely blank")
-	}
+	fmt.Println("--> Sending ping to:", serverName)
 
-	if ip == "0.0.0.0" {
-		return "", errors.New("WARNING: 0.0.0.0 is an invalid routing address")
-	}
-	if ip == "127.0.0.1" {
-		return "", errors.New("ERROR: Cannot ping the local loopback address.")
-	}
+	// We force the CPU to sleep for 2 seconds to simulate network lag.
+	time.Sleep(2 * time.Second)
 
-	// If the CPU makes it past the checks, the IP is valid.
-	// We return our success string, and 'nil' (meaning absolutely no error).
-	return "Ping successful! Packet returned from " + ip, nil
+	fmt.Println("[OK] Response received from:", serverName)
 }
 
 func main() {
-	fmt.Println("--- NETWORK DIAGNOSTIC TOOL ---")
-
-	// 2. THE TARGET
-	targetIP := "127.0.0.1"
-
-	// 3. CAPTURING MULTIPLE RETURNS
-	// We catch the string in 'result', and the error in 'err'
-	result, err := pingServer(targetIP)
-
-	// 4. THE GO ERROR CHECK
-	// "If the error is NOT equal to nothing..." (Meaning, an error exists!)
-	if err != nil {
-		// Print the error and immediately stop the program using 'return'
-		fmt.Println("DIAGNOSTIC FAILED:", err)
-		return
+	// 2. THE INFRASTRUCTURE
+	servers := []string{
+		"Alpha-DB",
+		"Beta-Cache",
+		"Gamma-Web",
+		"Delta-Auth",
 	}
 
-	// 5. SUCCESS PATH
-	// If the CPU reaches here, we know 100% that err was nil.
-	fmt.Println("DIAGNOSTIC PASSED:", result)
+	// 3. THE CHECK COUNTER
+	// We create a WaitGroup to keep track of how many background jobs are running.
+	var wg sync.WaitGroup
+
+	fmt.Println("--- INITIATING CONCURRENT SCAN ---")
+
+	// 4. SPAWNING GOROUTINES
+	for _, name := range servers {
+		// We tell the WaitGroup: "Add 1 to the counter, a new job is starting"
+		wg.Add(1)
+
+		// The 'go' keyword fires this function off into the background.
+		// It doesn't wait for the 2-second sleep. It instantly loops to the next server.
+		go checkServerHealth(name, &wg)
+	}
+
+	// 5. THE BLOCKER
+	// wg.Wait() pauses the main program right here.
+	// It refuses to let the program move forward until the Waitgroup counter hits exactly 0.
+	wg.Wait()
+
+	fmt.Println("--- ALL SCANS COMPLETE ---")
 }
