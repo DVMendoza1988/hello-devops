@@ -2,55 +2,45 @@ package main
 
 import (
 	"fmt"
-	"sync"
-	"time" // Gives the ability to pause the computer
+	"time"
 )
 
 // 1. THE CONCURRENT WORKER
-// We pass in our server name, and a Pointer to our WaitGroup counter.
-func checkServerHealth(serverName string, wg *sync.WaitGroup) {
-	// 'defer'is a magic word. It means: "Wait until this function is complete"
-	// and then run this line right before ejecting
-	// wg.Done() subtracts 1 from our WaitGroup counter
-	defer wg.Done()
+// We add a new paramater: 'results'
+// 'chain string' stricktly means a "a Channel that only accepts strings."
+func checkServerHealth(serverName string, results chan string) {
+	time.Sleep(1 * time.Second) // Simulate network work
 
-	fmt.Println("--> Sending ping to:", serverName)
-
-	// We force the CPU to sleep for 2 seconds to simulate network lag.
-	time.Sleep(2 * time.Second)
-
-	fmt.Println("[OK] Response received from:", serverName)
+	// 2. SENDING DATA INTO A CHANNEL
+	// The arrow <- points INTO the channel. We are shoving this text down the pipe.
+	results <- "[OK] " + serverName + " is online."
 }
 
 func main() {
-	// 2. THE INFRASTRUCTURE
-	servers := []string{
-		"Alpha-DB",
-		"Beta-Cache",
-		"Gamma-Web",
-		"Delta-Auth",
-	}
+	servers := []string{"Delta-Auth", "Alpha-DB", "Beta-Cache", "Gamma-Web"}
 
-	// 3. THE CHECK COUNTER
-	// We create a WaitGroup to keep track of how many background jobs are running.
-	var wg sync.WaitGroup
+	// 3. CREATING THE CHANNEL
+	// We must use 'make()' command to physically allocate the channel in memory.
+	healthStream := make(chan string)
 
-	fmt.Println("--- INITIATING CONCURRENT SCAN ---")
+	fmt.Println("--- DISPATCHING PROBES ---")
 
 	// 4. SPAWNING GOROUTINES
 	for _, name := range servers {
-		// We tell the WaitGroup: "Add 1 to the counter, a new job is starting"
-		wg.Add(1)
-
-		// The 'go' keyword fires this function off into the background.
-		// It doesn't wait for the 2-second sleep. It instantly loops to the next server.
-		go checkServerHealth(name, &wg)
+		// We pass our channel into each background worker.
+		// They all share the exact same pipe!
+		go checkServerHealth(name, healthStream)
 	}
 
-	// 5. THE BLOCKER
-	// wg.Wait() pauses the main program right here.
-	// It refuses to let the program move forward until the Waitgroup counter hits exactly 0.
-	wg.Wait()
+	// 5. RECEIVING FROM THE CHANNEL
+	// We know we sent exactly 3 probes (len(servers)),
+	// so we need to pull exactly 3 results off the conveyor belt.
+	for i := 0; i < len(servers); i++ {
+		// The arrow <- is IN FRONT of the channel. we are pulling data OUT of the channel.
+		// The CPU will pause on this line and wait if the pipe is currently empty.
+		msg := <-healthStream
+		fmt.Println("Received: ", msg)
+	}
 
-	fmt.Println("--- ALL SCANS COMPLETE ---")
+	fmt.Println("--- ALL DATA AGGREGATED ---")
 }
